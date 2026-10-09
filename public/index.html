@@ -321,7 +321,7 @@ let combo={};containers.forEach(c=>combo[c.typeName]=(combo[c.typeName]||0)+1);
 return{orderNo,containers,total,combo,warnings,materials}}
 function buildResultRows(r){let out=[],seq=0;r.containers.forEach(c=>{let names=[...new Set(c.items.map(x=>x.name))],boxes=c.items.reduce((s,x)=>s+x.boxes,0),net=c.items.reduce((s,x)=>s+x.perNet*x.boxes,0),vu=c.usedVol/c.maxVol,wu=c.usedWeight/c.maxWeight;
 c.items.forEach(it=>{out.push({type:'item',cells:[++seq,it.category,it.code,it.name,it.factory,it.temp,rnd(it.confirmed,3),rnd(it.boxes,3),rnd(it.perVol,3),rnd(it.perVol*it.boxes,3),rnd(it.perNet,2),rnd(it.perNet*it.boxes,2),rnd(it.perWeight,2),rnd(it.perWeight*it.boxes,2),c.typeName,'','',''],q:c.id})});
-let confirmedTotal=c.items.reduce((sum,x)=>sum+x.confirmed,0);out.push({type:'subtotal',cells:['合计',names.length+' 种货物','',c.typeName,'',c.temp,rnd(confirmedTotal,3),rnd(boxes,3),'',rnd(c.usedVol,3),'',rnd(net,2),'',rnd(c.usedWeight,2),c.typeName,(vu*100).toFixed(1)+'%',(wu*100).toFixed(1),''],q:c.id})});
+let confirmedTotal=c.items.reduce((sum,x)=>sum+x.confirmed,0);out.push({type:'subtotal',cells:['#'+c.id+' 小计',names.length+' 种货物','',c.typeName,'',c.temp,rnd(confirmedTotal,3),rnd(boxes,3),'',rnd(c.usedVol,3),'',rnd(net,2),'',rnd(c.usedWeight,2),c.typeName,(vu*100).toFixed(1)+'%',(wu*100).toFixed(1),''],q:c.id})});
 let combo=Object.keys(r.combo).map(k=>k+' × '+r.combo[k]).join(' + ');let confirmedGrand=r.materials.reduce((sum,x)=>sum+x.confirmed,0);out.push({type:'total',cells:['总计','','','柜型组合：'+combo,'','',rnd(confirmedGrand,3),rnd(r.total.boxes,3),'',rnd(r.total.vol,3),'',rnd(r.total.net,2),'',rnd(r.total.weight,2),'','','',''],q:''});return out}
 function align(ci){return ci===0?'center':[1,2,3,4,5,14,17].includes(ci)?'left':'right'}
 function renderResult(r){currentResult=r;if(!r){$('result-empty').style.display='block';$('result-wrap').style.display='none';return}
@@ -339,8 +339,7 @@ let out=[],confirmedGrand=0;
 r.containers.forEach(c=>{
 let confirmed=c.items.reduce((s,x)=>s+x.confirmed,0),boxes=c.items.reduce((s,x)=>s+x.boxes,0),net=c.items.reduce((s,x)=>s+x.perNet*x.boxes,0);
 confirmedGrand+=confirmed;
-let subText='小计　货物数量:'+rnd(confirmed,3)+'　包装数量:'+rnd(boxes,3)+'　总体积:'+rnd(c.usedVol,3)+' CBM　总净重:'+rnd(net,2)+' KG　总毛重:'+rnd(c.usedWeight,2)+' KG';
-out.push({type:'head',cells:['#'+c.id+'　'+c.typeName,'','','','','','','','','','','','','','','','']});
+let subText='#'+c.id+' 小计　货物数量:'+rnd(confirmed,3)+'　包装数量:'+rnd(boxes,3)+'　总体积:'+rnd(c.usedVol,3)+' CBM　总净重:'+rnd(net,2)+' KG　总毛重:'+rnd(c.usedWeight,2)+' KG';
 c.items.forEach(it=>{
 let m=findMaterial(it.code)||{};
 let cn=it.name||'',en=m['货物描述']||'';
@@ -353,7 +352,7 @@ return {rows:out};
 }
 function exportResultCsv(){if(!currentResult)return;let ed=buildExportData(currentResult),lines=[EXPORT_HEADERS_CN.join(',')];
 ed.rows.forEach(x=>{
-if(x.type==='head'||x.type==='sub'){lines.push(x.cells[0]);return}
+if(x.type==='sub'){lines.push(x.cells[0]);return}
 if(x.type==='total'){lines.push(x.cells.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(','));return}
 lines.push(x.cells.map(v=>'"'+String(v??'').replace(/\n/g,' ').replace(/"/g,'""')+'"').join(','));
 });
@@ -373,10 +372,7 @@ for(let c=0;c<17;c++)setStyle(0,c,{fill:{patternType:'solid',fgColor:{rgb:TITLE_
 for(let c=0;c<17;c++)setStyle(1,c,{fill:{patternType:'solid',fgColor:{rgb:HEAD_YD_FILL}},font:{bold:true},border:border(),alignment:{horizontal:'center',vertical:'center',wrapText:true}});
 let r=2;
 ed.rows.forEach(x=>{
-if(x.type==='head'){
-for(let c=0;c<17;c++)setStyle(r,c,{fill:{patternType:'solid',fgColor:{rgb:HEAD_YD_FILL}},font:{bold:true},border:border(),alignment:{horizontal:'left',vertical:'center'}});
-ws['!merges'].push({s:{r:r,c:0},e:{r:r,c:16}});
-}else if(x.type==='sub'){
+if(x.type==='sub'){
 for(let c=0;c<17;c++)setStyle(r,c,{fill:{patternType:'solid',fgColor:{rgb:SUB_FILL}},font:{bold:true},border:border(),alignment:{horizontal:'left',vertical:'center'}});
 ws['!merges'].push({s:{r:r,c:0},e:{r:r,c:16}});
 }else if(x.type==='total'){
